@@ -1247,11 +1247,20 @@ module API = struct
     let list = list
   end
 
+  module LOCAL = struct
+    let build ?(test=false) ?(doc=false) dir =
+      (* XXX(seliopou): switch backup is unnecessary *)
+      with_switch_backup "local" @@ fun t ->
+      (* XXX(seliopou): perform search a la pin *)
+      let opam = OpamFile.(OPAM.read OpamFilename.Op.(dir // "opam")) in
+      OpamProcess.Job.run
+        (OpamAction.build_local_package ~build_test:test ~build_doc:doc t opam dir)
+  end
+
   module REPOSITORY = OpamRepositoryCommand
   module CONFIG     = OpamConfigCommand
   module SWITCH     = OpamSwitchCommand
   module LIST       = OpamListCommand
-
 end
 
 let read_lock f =
@@ -1406,5 +1415,10 @@ module SafeAPI = struct
     let info ~fields ~raw_opam ~where regexps =
       read_lock (fun () -> OpamListCommand.info ~fields ~raw_opam ~where regexps)
 
+  end
+
+  module LOCAL = struct
+    let build ?test ?doc path =
+      API.LOCAL.build ?test ?doc path
   end
 end

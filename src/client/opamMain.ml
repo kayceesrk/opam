@@ -1110,6 +1110,31 @@ let pin ?(unpin_only=false) () =
           $command $params),
   term_info "pin" ~doc ~man
 
+(* LOCAL *)
+let local =
+  let doc = "Build a project in the current directory" in
+  let man = [
+    `S "DESCRIPTION";
+    `P "XXX(seliopou): write this" ]
+  in
+  let commands =
+    [ "build", `build, [], "build the local package";
+      "test", `test, [], "test the local pacakge";
+      "doc", `doc, [], "build documentation for the local package" ]
+  in
+  let command, params = mk_subcommands commands in
+  let local global_options command params =
+    apply_global_options global_options;
+    let path = OpamFilename.raw_dir "." in
+    match command, params with
+    | Some `build, [] -> `Ok (Client.LOCAL.build path)
+    | Some `test , [] -> `Ok (Client.LOCAL.build ~test:true path)
+    | Some `doc  , [] -> `Ok (Client.LOCAL.build ~doc:true path)
+    | _          , _  -> bad_subcommand commands ("local", command, params)
+  in
+  Term.(ret (pure local $ global_options $ command $ params)),
+  term_info "local" ~doc ~man
+
 (* SOURCE *)
 let source_doc = "Get the source of an OPAM package."
 let source =
@@ -1390,6 +1415,7 @@ let commands = [
   repository; make_command_alias repository "remote";
   switch;
   pin (); make_command_alias (pin ~unpin_only:true ()) ~options:" remove" "unpin";
+  local;
   source;
   lint;
   help;

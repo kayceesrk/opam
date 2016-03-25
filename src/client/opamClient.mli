@@ -175,6 +175,9 @@ module API: sig
 
   end
 
+  module LOCAL: sig
+    val build : ?test:bool -> ?doc:bool -> OpamTypes.dirname -> unit
+  end
 end
 
 (** Call an unsafe function while taking the global lock. *)

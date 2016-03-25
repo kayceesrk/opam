@@ -553,6 +553,35 @@ let build_package t source nv =
   in
   run_commands commands
 
+let build_local_package ?(build_test=false) ?(build_doc=false) t opam dir =
+  let name = "my-package" in (* XXX(seliopou): maybe preserve this? *)
+  let commands =
+    OpamFile.OPAM.build opam @
+    (if build_test then OpamFile.OPAM.build_test opam else []) @
+    (if build_doc then OpamFile.OPAM.build_doc opam else [])
+  in
+  let commands = OpamFilter.commands (OpamState.filter_env ~opam t) commands in
+  let env = OpamTypesBase.env_array (compilation_env t opam) in
+  let rec run_commands = function
+    | (cmd::args)::commands ->
+      let text = OpamProcess.make_command_text name ~args cmd in
+      let dir = OpamFilename.Dir.to_string dir in
+      OpamSystem.make_command ~env ~name ~dir ~text
+        ~verbose:(OpamConsole.verbose ()) ~check_existence:false
+        cmd args
+      @@> fun result ->
+      if OpamProcess.is_success result then
+        run_commands commands
+      else
+        (OpamConsole.error
+           "The compilation of %s failed at %S."
+           name (String.concat " " (cmd::args));
+         Done (Some (OpamSystem.Process_error result)))
+    | []::commands -> run_commands commands
+    | [] -> Done None
+  in
+  run_commands commands
+
 (* Assumes the package has already been compiled in its build dir.
    Does not register the installation in the metadata ! *)
 let install_package t nv =

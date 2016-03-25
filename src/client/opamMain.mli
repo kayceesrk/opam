@@ -72,6 +72,9 @@ val switch: command
 (** opam pin *)
 val pin: ?unpin_only:bool -> unit -> command
 
+(** opam local *)
+val local : command
+
 (** opam help *)
 val help: command
 

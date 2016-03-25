@@ -35,6 +35,14 @@ val extract_package: t -> generic_file option -> package -> unit
 val build_package:
   t -> generic_file option -> package -> exn option OpamProcess.job
 
+val build_local_package:
+  ?build_test:bool ->
+  ?build_doc:bool ->
+  t ->
+  OpamFile.OPAM.t ->
+  OpamTypes.dirname ->
+  exn option OpamProcess.job
+
 (** [install_package t pkg] installs an already built package. Returns
     [None] on success, [Some exn] on error. Do not update OPAM's
     metadata. See {!build_package} to build the package. *)
