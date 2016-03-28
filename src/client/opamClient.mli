@@ -176,7 +176,8 @@ module API: sig
   end
 
   module LOCAL: sig
-    val build : ?test:bool -> ?doc:bool -> OpamTypes.dirname -> unit
+    val build :
+      ?check:bool -> ?test:bool -> ?doc:bool -> OpamTypes.name -> OpamTypes.dirname -> unit
   end
 end
 

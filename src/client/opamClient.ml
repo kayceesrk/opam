@@ -1248,13 +1248,44 @@ module API = struct
   end
 
   module LOCAL = struct
-    let build ?(test=false) ?(doc=false) dir =
+    let build ?(check=false) ?(test=false) ?(doc=false) name dir =
       (* XXX(seliopou): switch backup is unnecessary *)
       with_switch_backup "local" @@ fun t ->
-      (* XXX(seliopou): perform search a la pin *)
-      let opam = OpamFile.(OPAM.read OpamFilename.Op.(dir // "opam")) in
+      let build_test, build_doc = test, doc in
+      let opam_file, _, _ = OpamState.find_metadata_in_source name dir in
+      let opam =
+        match opam_file with
+        | None -> assert false (* XXX(seliopou): print a helpful message *)
+        | Some opam ->
+          let warns, opam_opt = OpamFile.OPAM.validate_file opam in
+          if check && warns <> [] then
+            (OpamConsole.warning
+               "%s opam file of %s (fix changes locally):"
+               (if opam_opt = None then "Fatal errors, not using"
+                else "Failed checks in")
+               (OpamConsole.colorise `bold (OpamPackage.Name.to_string name));
+             OpamConsole.errmsg "%s\n"
+               (OpamFile.OPAM.warns_to_string warns));
+          begin match opam_opt with
+          | None -> assert false (* XXX(seliopou): print a helpful message *)
+          | Some opam ->
+            let open OpamFile in
+            let opam =
+              let default_name = OpamPackage.Name.of_string "local-package" in
+              match OPAM.name_opt opam with
+              | None -> OPAM.with_name opam default_name
+              | Some _ -> opam
+            in
+            let opam =
+              match OPAM.version_opt opam with
+              | None -> OPAM.with_version opam (OpamPackage.Version.of_string "dev")
+              | Some _ -> opam
+            in
+            opam
+          end
+      in
       OpamProcess.Job.run
-        (OpamAction.build_local_package ~build_test:test ~build_doc:doc t opam dir)
+        (OpamAction.build_local_package ~build_test ~build_doc t opam dir)
   end
 
   module REPOSITORY = OpamRepositoryCommand
@@ -1418,7 +1449,7 @@ module SafeAPI = struct
   end
 
   module LOCAL = struct
-    let build ?test ?doc path =
-      API.LOCAL.build ?test ?doc path
+    let build ?check ?test ?doc name path =
+      API.LOCAL.build ?check ?test ?doc name path
   end
 end

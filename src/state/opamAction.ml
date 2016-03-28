@@ -554,7 +554,7 @@ let build_package t source nv =
   run_commands commands
 
 let build_local_package ?(build_test=false) ?(build_doc=false) t opam dir =
-  let name = "my-package" in (* XXX(seliopou): maybe preserve this? *)
+  let name = OpamPackage.Name.to_string (OpamFile.OPAM.name opam) in
   let commands =
     OpamFile.OPAM.build opam @
     (if build_test then OpamFile.OPAM.build_test opam else []) @
