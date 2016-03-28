@@ -548,11 +548,7 @@ let find_opam_file_in_source name dir =
       dir / "opam" // "opam";
       dir // "opam" ]
 
-(* Returns [opam, descr_file, files_dir]. We don't consider [url] since
-   this is for pinned packages. if [root], don't look for a subdir [opam]
-   to find [files] and [descr]. *)
-let local_opam ?(root=false) ?fixed_version ?(check=false) ?copy_invalid_to
-    name dir =
+let find_metadata_in_source ?(root=false) name dir =
   let has_dir d = if OpamFilename.exists_dir d then Some d else None in
   let has_file f = if OpamFilename.exists f then Some f else None in
   let metadir =
@@ -565,6 +561,15 @@ let local_opam ?(root=false) ?fixed_version ?(check=false) ?copy_invalid_to
     if root then has_file (dir // "opam")
     else find_opam_file_in_source name dir
   in
+  opam_file, has_file (metadir // "descr"), has_dir (metadir / "files")
+
+(* Returns [opam, descr_file, files_dir]. We don't consider [url] since
+   this is for pinned packages. if [root], don't look for a subdir [opam]
+   to find [files] and [descr]. *)
+let local_opam ?(root=false) ?fixed_version ?(check=false) ?copy_invalid_to
+    name dir =
+  let opam_file, meta_file, files_dir =
+    find_metadata_in_source ~root name dir in
   let opam_opt = match opam_file with
     | None -> None
     | Some local_opam ->
@@ -596,7 +601,7 @@ let local_opam ?(root=false) ?fixed_version ?(check=false) ?copy_invalid_to
            opam)
         opam_opt
   in
-  opam_opt, has_file (metadir // "descr"), has_dir (metadir / "files")
+  opam_opt, meta_file, files_dir
 
 
 let remove_overlay t name =

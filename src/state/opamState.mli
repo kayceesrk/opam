@@ -398,6 +398,12 @@ val is_dev_package: state -> package -> bool
 (** Looks up an 'opam' file for the given named package in a source directory *)
 val find_opam_file_in_source: name -> dirname -> filename option
 
+(** Looks up the location for the metadata files for the given named package in
+    the source directory. If found, returns the location of the 'opam' file,
+    the 'descr' file, and the 'files' directory, respectivley. *)
+val find_metadata_in_source:
+  ?root:bool -> name -> dirname -> filename option * filename option * dirname option
+
 (** {2 Configuration files} *)
 
 (** Return the global .config file for the current switch *)
