@@ -18,7 +18,7 @@ open OpamTypes
 type t = {
   root_dir: OpamFilename.Dir.t;
   current_switch: OpamSwitch.t;
-  switch_from: [ `Env | `Command_line | `Default ];
+  switch_from: [ `Local | `Env | `Command_line | `Default ];
   jobs: int Lazy.t;
   dl_jobs: int;
   external_tags: string list;
@@ -60,7 +60,7 @@ let default = {
 type 'a options_fun =
   ?root_dir:OpamFilename.Dir.t ->
   ?current_switch:OpamSwitch.t ->
-  ?switch_from:[ `Env | `Command_line | `Default ] ->
+  ?switch_from:[ `Local | `Env | `Command_line | `Default ] ->
   ?jobs:(int Lazy.t) ->
   ?dl_jobs:int ->
   ?external_tags:string list ->
@@ -117,12 +117,21 @@ let r = ref default
 
 let update ?noop:_ = setk (fun cfg () -> r := cfg) !r
 
+let init_local () =
+  let opamlocal = OpamFilename.of_string ".opamlocal" in
+  let var = OpamVariable.of_string "OPAMSWITCH" in
+  try
+    match OpamFile.Dot_config.(variable (read opamlocal) var) with
+    | Some (S switch) -> Some (OpamSwitch.of_string switch), Some `Local
+    | _               -> None, None
+  with _ -> None, None
+
 let initk k =
   let open OpamStd.Config in
   let open OpamStd.Option.Op in
   let current_switch, switch_from =
     match env_string "SWITCH" with
-    | Some "" | None -> None, None
+    | Some "" | None -> init_local ()
     | Some s -> Some (OpamSwitch.of_string s), Some `Env
   in
   setk (setk (fun c -> r := c; k)) !r

@@ -1248,6 +1248,22 @@ module API = struct
   end
 
   module LOCAL = struct
+
+    let create_cont ?(compiler=OpamCompiler.system) ?(filename=".opamlocal") ~quiet dir =
+      (if OpamFilename.(exists (of_string filename)) then
+        assert false); (* XXX(seliopou): print a helpful message *)
+      let switch = OpamSwitch.of_string "random" in
+      let mappings =
+        let open OpamVariable in
+        [ of_string "OPAMSWITCH", S (OpamSwitch.to_string switch) ]
+      in
+      let opamlocal = OpamFilename.Op.(dir // filename) in
+      OpamFile.Dot_config.(write opamlocal (create mappings));
+      OpamSwitchCommand.install_cont ~quiet ~update_config:false switch compiler
+
+    let create ?compiler ?filename ~quiet dir =
+      snd (create_cont ?compiler ?filename ~quiet dir) ()
+
     let build ?(check=false) ?(test=false) ?(doc=false) name dir =
       (* XXX(seliopou): switch backup is unnecessary *)
       with_switch_backup "local" @@ fun t ->
@@ -1449,6 +1465,10 @@ module SafeAPI = struct
   end
 
   module LOCAL = struct
+    let create ?compiler ?filename ~quiet path =
+      global_then_switch_lock (fun () ->
+        API.LOCAL.create_cont ?compiler ?filename ~quiet path)
+
     let build ?check ?test ?doc name path =
       API.LOCAL.build ?check ?test ?doc name path
   end

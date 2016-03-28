@@ -176,7 +176,14 @@ module API: sig
   end
 
   module LOCAL: sig
-    val build :
+    val create:
+      ?compiler:OpamCompiler.t ->
+      ?filename:string ->
+      quiet:bool ->
+      OpamTypes.dirname ->
+      unit
+
+    val build:
       ?check:bool -> ?test:bool -> ?doc:bool -> OpamTypes.name -> OpamTypes.dirname -> unit
   end
 end

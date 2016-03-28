@@ -18,7 +18,7 @@ open OpamTypes
 type t = private {
   root_dir: OpamFilename.Dir.t;
   current_switch: OpamSwitch.t;
-  switch_from: [ `Env | `Command_line | `Default ];
+  switch_from: [ `Local | `Env | `Command_line | `Default ];
   jobs: int Lazy.t;
   dl_jobs: int;
   external_tags: string list;
@@ -36,7 +36,7 @@ type t = private {
 type 'a options_fun =
   ?root_dir:OpamFilename.Dir.t ->
   ?current_switch:OpamSwitch.t ->
-  ?switch_from:[ `Env | `Command_line | `Default ] ->
+  ?switch_from:[ `Local | `Env | `Command_line | `Default ] ->
   ?jobs:(int Lazy.t) ->
   ?dl_jobs:int ->
   ?external_tags:string list ->

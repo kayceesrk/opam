@@ -1118,19 +1118,23 @@ let local =
     `P "XXX(seliopou): write this" ]
   in
   let commands =
-    [ "build", `build, [], "build the local package";
+    [ "create", `create, [], "create a local switch";
+      "build", `build, [], "build the local package";
       "test", `test, [], "test the local pacakge";
       "doc", `doc, [], "build documentation for the local package" ]
   in
   let command, params = mk_subcommands commands in
   let local global_options command params =
     apply_global_options global_options;
+    let quiet = (fst global_options).quiet in
     let path = OpamFilename.raw_dir "." in
+    let name = OpamPackage.Name.of_string "local-package" in
     match command, params with
-    | Some `build, [] -> `Ok (Client.LOCAL.build path)
-    | Some `test , [] -> `Ok (Client.LOCAL.build ~test:true path)
-    | Some `doc  , [] -> `Ok (Client.LOCAL.build ~doc:true path)
-    | _          , _  -> bad_subcommand commands ("local", command, params)
+    | Some `create, [] -> `Ok (Client.LOCAL.create ~quiet path)
+    | Some `build , [] -> `Ok (Client.LOCAL.build name path)
+    | Some `test  , [] -> `Ok (Client.LOCAL.build ~test:true name path)
+    | Some `doc   , [] -> `Ok (Client.LOCAL.build ~doc:true name path)
+    | _           , _  -> bad_subcommand commands ("local", command, params)
   in
   Term.(ret (pure local $ global_options $ command $ params)),
   term_info "local" ~doc ~man
