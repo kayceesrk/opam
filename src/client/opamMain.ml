@@ -1117,26 +1117,30 @@ let local =
     `S "DESCRIPTION";
     `P "XXX(seliopou): write this" ]
   in
+  let alias_of =
+    mk_opt ["A";"alias-of"]
+      "COMP" "The name of the compiler description which will be aliased."
+      Arg.(some string) None in
   let commands =
     [ "create", `create, [], "create a local switch";
       "build", `build, [], "build the local package";
       "test", `test, [], "test the local pacakge";
-      "doc", `doc, [], "build documentation for the local package" ]
-  in
+      "doc", `doc, [], "build documentation for the local package" ] in
   let command, params = mk_subcommands commands in
-  let local global_options command params =
+  let local global_options command alias_of params =
     apply_global_options global_options;
+    let compiler = OpamStd.Option.map OpamCompiler.of_string alias_of in
     let quiet = (fst global_options).quiet in
     let path = OpamFilename.raw_dir "." in
     let name = OpamPackage.Name.of_string "local-package" in
     match command, params with
-    | Some `create, [] -> `Ok (Client.LOCAL.create ~quiet path)
+    | Some `create, [] -> `Ok (Client.LOCAL.create ?compiler ~quiet path)
     | Some `build , [] -> `Ok (Client.LOCAL.build name path)
     | Some `test  , [] -> `Ok (Client.LOCAL.build ~test:true name path)
     | Some `doc   , [] -> `Ok (Client.LOCAL.build ~doc:true name path)
     | _           , _  -> bad_subcommand commands ("local", command, params)
   in
-  Term.(ret (pure local $ global_options $ command $ params)),
+  Term.(ret (pure local $ global_options $ command $ alias_of $ params)),
   term_info "local" ~doc ~man
 
 (* SOURCE *)
