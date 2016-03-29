@@ -1740,7 +1740,7 @@ let load_state ?save_cache call_site switch =
       if OpamCoreConfig.(!r.safe_mode) then
         OpamConsole.error_and_exit "Safe mode: invalid switch selected";
       match OpamStateConfig.(!r.switch_from) with
-      | `Command_line | `Env -> OpamSwitch.not_installed switch
+      | `Local | `Command_line | `Env -> OpamSwitch.not_installed switch
       | `Default ->
         OpamConsole.error "Current switch set to %S, which is unknown."
           (OpamSwitch.to_string switch);
